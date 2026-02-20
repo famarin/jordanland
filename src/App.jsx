@@ -1,6 +1,8 @@
 ﻿import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { signOut } from "firebase/auth";
-import { auth } from "./firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+import { auth, db } from "./firebase";
+import UploadLand from "./UploadLand";
 
 const R=[
 {id:4,g:"محافظة اربد",d:"اراضي اربد",v:"اربد",bn:8,b:"البلد",h:2,bd:32,p:70,a:212.7,s:"0.8223",pm:1500.0,pr:262343.85,mu:"",pi:""},
@@ -617,7 +619,19 @@ export default function JordanLand(){
   const [showComp,setShowComp]=useState(false);
   const [showFavs,setShowFavs]=useState(false);
   const [perPage,setPerPage]=useState(40);
+  const [showUpload,setShowUpload]=useState(false);
+  const [fbLands,setFbLands]=useState([]);
   const listRef=useRef(null);
+
+  useEffect(()=>{
+    const unsub=onSnapshot(collection(db,"lands"),(snap)=>{
+      const lands=snap.docs.map((doc,i)=>{const d=doc.data();return{id:"fb_"+doc.id,gov:d.gov||"",dist:d.dist||"",village:d.village||"",basinNo:d.basinNo||0,basin:d.basin||"",hood:d.hood||0,board:d.board||0,plot:d.plot||0,area:d.area||0,share:d.share||"1/1",ppm:d.ppm||0,price:d.price||0,mapUrl:d.mapUrl||"",pic:d.pic||"",userSubmitted:true};});
+      setFbLands(lands);
+    });
+    return unsub;
+  },[]);
+
+  const ALL_LOTS=useMemo(()=>[...LOTS,...fbLands],[fbLands]);
 
   useEffect(()=>{
     if(page==="listings"&&listRef.current){listRef.current.scrollTop=0;}
@@ -627,13 +641,13 @@ export default function JordanLand(){
   const toggleFav=useCallback(id=>setFavs(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]),[]);
   const toggleComp=useCallback(id=>setCompIds(p=>p.includes(id)?p.filter(x=>x!==id):p.length<4?[...p,id]:p),[]);
 
-  const govs=useMemo(()=>[...new Set(LOTS.map(l=>l.gov))].sort((a,b)=>a.localeCompare(b,"ar")),[]);
-  const dists=useMemo(()=>filters.gov?[...new Set(LOTS.filter(l=>l.gov===filters.gov).map(l=>l.dist))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.gov]);
-  const villages=useMemo(()=>filters.dist?[...new Set(LOTS.filter(l=>l.dist===filters.dist).map(l=>l.village))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.dist]);
-  const basins=useMemo(()=>filters.village?[...new Set(LOTS.filter(l=>l.village===filters.village).map(l=>l.basin))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.village]);
+  const govs=useMemo(()=>[...new Set(ALL_LOTS.map(l=>l.gov))].sort((a,b)=>a.localeCompare(b,"ar")),[ALL_LOTS]);
+  const dists=useMemo(()=>filters.gov?[...new Set(ALL_LOTS.filter(l=>l.gov===filters.gov).map(l=>l.dist))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.gov,ALL_LOTS]);
+  const villages=useMemo(()=>filters.dist?[...new Set(ALL_LOTS.filter(l=>l.dist===filters.dist).map(l=>l.village))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.dist,ALL_LOTS]);
+  const basins=useMemo(()=>filters.village?[...new Set(ALL_LOTS.filter(l=>l.village===filters.village).map(l=>l.basin))].sort((a,b)=>a.localeCompare(b,"ar")):[], [filters.village,ALL_LOTS]);
 
   const filtered=useMemo(()=>{
-    let r=LOTS;
+    let r=ALL_LOTS;
     if(search){const s=search.trim();r=r.filter(l=>l.gov.includes(s)||l.dist.includes(s)||l.village.includes(s)||l.basin.includes(s)||String(l.plot).includes(s)||l.gov.replace("محافظة ","").includes(s)||l.dist.replace("اراضي ","").replace("محافظة ","").includes(s));}
     if(filters.gov)r=r.filter(l=>l.gov===filters.gov);
     if(filters.dist)r=r.filter(l=>l.dist===filters.dist);
@@ -642,11 +656,11 @@ export default function JordanLand(){
     const [key,dir]=sort.split("-");
     r=[...r].sort((a,b)=>{if(key==="gov"||key==="village")return dir==="asc"?String(a[key]).localeCompare(String(b[key]),"ar"):String(b[key]).localeCompare(String(a[key]),"ar");return dir==="asc"?(a[key]-b[key]):(b[key]-a[key]);});
     return r;
-  },[filters,sort,search]);
+  },[filters,sort,search,ALL_LOTS]);
 
   const shown=filtered.slice(0,perPage);
-  const favLots=useMemo(()=>LOTS.filter(l=>favs.includes(l.id)),[favs]);
-  const compLots=useMemo(()=>LOTS.filter(l=>compIds.includes(l.id)),[compIds]);
+  const favLots=useMemo(()=>ALL_LOTS.filter(l=>favs.includes(l.id)),[favs,ALL_LOTS]);
+  const compLots=useMemo(()=>ALL_LOTS.filter(l=>compIds.includes(l.id)),[compIds,ALL_LOTS]);
 
   const setFilter=(k,v)=>{
     const next={...filters,[k]:v};
@@ -659,7 +673,7 @@ export default function JordanLand(){
   const activeCount=Object.values(filters).filter(Boolean).length+(search?1:0);
 
   // Governorate stats
-  const govStats=useMemo(()=>govs.map(g=>{const lots=LOTS.filter(l=>l.gov===g);return{name:g,count:lots.length,villages:[...new Set(lots.map(l=>l.village))],totalValue:lots.reduce((s,l)=>s+l.price,0)};}),[govs]);
+  const govStats=useMemo(()=>govs.map(g=>{const lots=ALL_LOTS.filter(l=>l.gov===g);return{name:g,count:lots.length,villages:[...new Set(lots.map(l=>l.village))],totalValue:lots.reduce((s,l)=>s+l.price,0)};}),[govs,ALL_LOTS]);
 
   const Navbar=()=><nav style={{background:"linear-gradient(135deg,#1a1207,#0f172a)",padding:"0 20px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,borderBottom:"2px solid #d97706",flexShrink:0}}>
     <div onClick={()=>setPage("home")} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
@@ -672,6 +686,7 @@ export default function JordanLand(){
         ❤️{favs.length>0&&<span style={{background:"#ef4444",color:"white",fontSize:8,fontWeight:800,borderRadius:10,padding:"0px 5px",marginRight:2}}>{favs.length}</span>}
       </button>
       {compIds.length>=2&&<button onClick={()=>setShowComp(true)} style={{background:"#3b82f6",border:"none",borderRadius:7,padding:"5px 12px",color:"white",cursor:"pointer",fontSize:11,fontWeight:600}}>⚖️ قارن ({compIds.length})</button>}
+      <button onClick={()=>setShowUpload(true)} style={{background:"linear-gradient(135deg,#22c55e,#16a34a)",border:"none",borderRadius:7,padding:"5px 12px",color:"white",cursor:"pointer",fontSize:11,fontWeight:700}}>+ إضافة أرض</button>
       {page!=="listings"&&<button onClick={()=>setPage("listings")} style={{background:"linear-gradient(135deg,#d97706,#b45309)",border:"none",borderRadius:7,padding:"5px 16px",color:"white",cursor:"pointer",fontSize:11,fontWeight:700}}>تصفح الأراضي</button>}
       <button onClick={()=>signOut(auth)} style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:7,padding:"5px 12px",color:"#fca5a5",cursor:"pointer",fontSize:11,fontWeight:600}}>خروج</button>
     </div>
@@ -695,7 +710,7 @@ export default function JordanLand(){
           <button onClick={()=>{setFilters({gov:"",dist:"",village:"",basin:""});setPage("listings");}} style={{background:"linear-gradient(135deg,#d97706,#b45309)",color:"white",borderRadius:9,padding:"11px 22px",fontSize:12.5,fontWeight:700,border:"none",cursor:"pointer"}}>🔍 بحث</button>
         </div>
         <div style={{display:"flex",gap:36,marginTop:28}}>
-          {[[LOTS.length,"قطعة أرض"],[govs.length,"محافظات"],[LOTS.filter(l=>l.mapUrl).length,"موقع على الخريطة"],[LOTS.filter(l=>l.pic).length,"صورة متوفرة"]].map(([n,l],i)=>
+          {[[ALL_LOTS.length,"قطعة أرض"],[govs.length,"محافظات"],[ALL_LOTS.filter(l=>l.mapUrl).length,"موقع على الخريطة"],[ALL_LOTS.filter(l=>l.pic).length,"صورة متوفرة"]].map(([n,l],i)=>
             <div key={i}><div style={{fontSize:24,fontWeight:900,color:"#fbbf24"}}>{n}</div><div style={{fontSize:10,color:"#94a3b8"}}>{l}</div></div>
           )}
         </div>
@@ -737,6 +752,7 @@ export default function JordanLand(){
     </div>
     {showFavs&&<FavModal lots={favLots} onClose={()=>setShowFavs(false)} onDetail={l=>{setDetail(l);setShowFavs(false)}} toggleFav={toggleFav}/>}
     <DetailModal lot={detail} onClose={()=>setDetail(null)}/>
+    {showUpload&&<UploadLand onClose={()=>setShowUpload(false)}/>}
   </div>;
 
   // ─── LISTINGS ───
@@ -750,7 +766,7 @@ export default function JordanLand(){
           {activeCount>0&&<button onClick={clearFilters} style={{background:"#fef2f2",border:"none",borderRadius:5,padding:"3px 8px",color:"#ef4444",cursor:"pointer",fontSize:10,fontWeight:600}}>مسح</button>}
         </div>
         <input value={search} onChange={e=>{setSearch(e.target.value);setPerPage(40)}} placeholder="ابحث: محافظة، مديرية، قرية، حوض..." style={{width:"100%",border:"1.5px solid #e2e8f0",borderRadius:9,padding:"9px 11px",fontSize:12,outline:"none",boxSizing:"border-box",marginBottom:12}}/>
-        <FilterSelect label="المحافظة" icon="🏛️" value={filters.gov} options={govs} onChange={v=>setFilter("gov",v)} count={filters.gov?LOTS.filter(l=>l.gov===filters.gov).length:LOTS.length}/>
+        <FilterSelect label="المحافظة" icon="🏛️" value={filters.gov} options={govs} onChange={v=>setFilter("gov",v)} count={filters.gov?ALL_LOTS.filter(l=>l.gov===filters.gov).length:ALL_LOTS.length}/>
         <FilterSelect label="مديرية التسجيل" icon="📍" value={filters.dist} options={dists} onChange={v=>setFilter("dist",v)} disabled={!filters.gov}/>
         <FilterSelect label="القرية" icon="🏘️" value={filters.village} options={villages} onChange={v=>setFilter("village",v)} disabled={!filters.dist}/>
         <FilterSelect label="الحوض" icon="📐" value={filters.basin} options={basins} onChange={v=>setFilter("basin",v)} disabled={!filters.village}/>
@@ -764,7 +780,7 @@ export default function JordanLand(){
         <div style={{marginTop:"auto",paddingTop:16,borderTop:"1px solid #f1f5f9"}}>
           <div style={{background:"#f8fafc",borderRadius:9,padding:12}}>
             <div style={{fontSize:10,color:"#94a3b8"}}>نتائج البحث</div>
-            <div style={{fontSize:20,fontWeight:800,color:"#1e293b"}}>{filtered.length} <span style={{fontSize:12,fontWeight:400,color:"#64748b"}}>/ {LOTS.length}</span></div>
+            <div style={{fontSize:20,fontWeight:800,color:"#1e293b"}}>{filtered.length} <span style={{fontSize:12,fontWeight:400,color:"#64748b"}}>/ {ALL_LOTS.length}</span></div>
           </div>
         </div>
       </div>
@@ -812,6 +828,7 @@ export default function JordanLand(){
     <DetailModal lot={detail} onClose={()=>setDetail(null)}/>
     {showComp&&<CompareModal lots={compLots} onClose={()=>setShowComp(false)}/>}
     {showFavs&&<FavModal lots={favLots} onClose={()=>setShowFavs(false)} onDetail={l=>{setDetail(l);setShowFavs(false)}} toggleFav={toggleFav}/>}
+    {showUpload&&<UploadLand onClose={()=>setShowUpload(false)}/>}
   </div>;
 }
 
