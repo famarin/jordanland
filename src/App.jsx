@@ -1,4 +1,6 @@
 ﻿import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebase";
 
 const R=[
 {id:4,g:"محافظة اربد",d:"اراضي اربد",v:"اربد",bn:8,b:"البلد",h:2,bd:32,p:70,a:212.7,s:"0.8223",pm:1500.0,pr:262343.85,mu:"",pi:""},
@@ -671,6 +673,7 @@ export default function JordanLand(){
       </button>
       {compIds.length>=2&&<button onClick={()=>setShowComp(true)} style={{background:"#3b82f6",border:"none",borderRadius:7,padding:"5px 12px",color:"white",cursor:"pointer",fontSize:11,fontWeight:600}}>⚖️ قارن ({compIds.length})</button>}
       {page!=="listings"&&<button onClick={()=>setPage("listings")} style={{background:"linear-gradient(135deg,#d97706,#b45309)",border:"none",borderRadius:7,padding:"5px 16px",color:"white",cursor:"pointer",fontSize:11,fontWeight:700}}>تصفح الأراضي</button>}
+      <button onClick={()=>signOut(auth)} style={{background:"rgba(239,68,68,0.15)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:7,padding:"5px 12px",color:"#fca5a5",cursor:"pointer",fontSize:11,fontWeight:600}}>خروج</button>
     </div>
   </nav>;
 
