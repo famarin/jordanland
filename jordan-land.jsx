@@ -386,6 +386,7 @@ export default function JordanLand(){
           </div>
           <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
             <div style={{display:"flex",gap:"4px",direction:"rtl",flexWrap:"wrap"}}>
+              <button onClick={()=>setPropTypeFilter("")} style={{padding:"4px 10px",background:!propTypeFilter?C.accent+"30":"transparent",border:`1px solid ${!propTypeFilter?C.accent:C.border}`,borderRadius:"8px",color:!propTypeFilter?C.accent:C.textDim,cursor:"pointer",fontSize:"12px",fontWeight:600,transition:"all 0.2s"}}>🔄 عرض الكل</button>
               {[{v:"سكني",i:"🏡"},{v:"تجاري",i:"🏬"},{v:"صناعي",i:"🏭"},{v:"زراعي",i:"🌾"}].map(t=>(
                 <button key={t.v} onClick={()=>setPropTypeFilter(propTypeFilter===t.v?"":t.v)} style={{padding:"4px 10px",background:propTypeFilter===t.v?C.accent+"30":"transparent",border:`1px solid ${propTypeFilter===t.v?C.accent:C.border}`,borderRadius:"8px",color:propTypeFilter===t.v?C.accent:C.textDim,cursor:"pointer",fontSize:"12px",fontWeight:600,transition:"all 0.2s"}}>{t.i} {t.v}</button>
               ))}
@@ -407,7 +408,7 @@ export default function JordanLand(){
       )}
 
       {/* Main content: split view - takes remaining height */}
-      <div style={{flex:1,display:"flex",overflow:"hidden",minHeight:0}}>
+      <div style={{flex:1,display:"flex",overflow:"hidden",minHeight:0,direction:"ltr"}}>
         {/* MAP */}
         {(!isMobile||mobileView==="map")&&(
           <div style={{flex:isMobile?1:1.2,position:"relative",height:"100%"}}>
@@ -417,7 +418,7 @@ export default function JordanLand(){
 
         {/* LIST PANEL */}
         {(!isMobile||mobileView==="list")&&(
-          <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",height:"100%",borderRight:isMobile?"none":`1px solid ${C.border}`}}>
+          <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",height:"100%",borderLeft:isMobile?"none":`1px solid ${C.border}`}}>
             {/* Filters */}
             <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,flexShrink:0,overflowY:"auto",maxHeight:"200px"}}>
               <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
@@ -427,7 +428,7 @@ export default function JordanLand(){
                 <select style={selectStyle} value={villFilter} onChange={e=>{setVillFilter(e.target.value);setBasinFilter("");setHoodFilter("")}} disabled={!distFilter}><option value="">كل القرى</option>{filteredVills.map(v=><option key={v[1]} value={v[1]}>{v[0]} ({v[1]})</option>)}</select>
                 <select style={selectStyle} value={basinFilter} onChange={e=>{setBasinFilter(e.target.value);setHoodFilter("")}} disabled={!villFilter}><option value="">كل الأحواض</option>{filteredBasins.map((b,i)=><option key={i} value={b[1]}>{b[0]} ({b[1]})</option>)}</select>
                 <select style={selectStyle} value={hoodFilter} onChange={e=>setHoodFilter(e.target.value)} disabled={!basinFilter}><option value="">كل الأحياء</option>{filteredHoods.map((h,i)=><option key={i} value={h[0]}>{h[0]}</option>)}</select>
-                <select style={{...selectStyle,borderColor:propTypeFilter?C.blue:C.border}} value={propTypeFilter} onChange={e=>setPropTypeFilter(e.target.value)}><option value="">كل أنواع العقارات</option><option value="سكني">🏡 سكني</option><option value="تجاري">🏬 تجاري</option><option value="صناعي">🏭 صناعي</option><option value="زراعي">🌾 زراعي</option><option value="فيلا / شقة">🏠 فيلا / شقة</option></select>
+                <select style={{...selectStyle,borderColor:propTypeFilter?C.blue:C.border}} value={propTypeFilter} onChange={e=>setPropTypeFilter(e.target.value)}><option value="">🔄 عرض الكل</option><option value="سكني">🏡 سكني</option><option value="تجاري">🏬 تجاري</option><option value="صناعي">🏭 صناعي</option><option value="زراعي">🌾 زراعي</option><option value="فيلا / شقة">🏠 فيلا / شقة</option></select>
                 {(govFilter||distFilter||villFilter||basinFilter||hoodFilter||propTypeFilter||search)&&<button onClick={resetFilters} style={{padding:"8px 14px",background:C.red+"20",color:C.red,border:`1px solid ${C.red}40`,borderRadius:"10px",cursor:"pointer",fontWeight:600,fontSize:"13px",alignSelf:"flex-end"}}>✕ مسح الفلاتر</button>}
               </div>
             </div>
