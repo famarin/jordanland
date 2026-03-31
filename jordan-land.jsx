@@ -316,8 +316,8 @@ export default function JordanLand(){
           <div style={{display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap"}}>
             {landingBtn("🔄","عرض الكل","","عرض جميع العقارات")}
             {landingBtn("🏡","سكني","سكني","شقق، فلل، أراضي سكنية")}
-            {landingBtn("🏬","تجاري","تجاري","مكاتب، محلات، مجمعات")}
-            {landingBtn("🏭","صناعي","صناعي","مصانع، مستودعات، ورش")}
+            {landingBtn("🏬","تجاري","تجاري","أراضي، مكاتب، محلات، مجمعات")}
+            {landingBtn("🏭","صناعي","صناعي","أراضي، مصانع، مستودعات، ورش")}
             {landingBtn("🌾","زراعي","زراعي","أراضي زراعية، مزارع")}
           </div>
         </div>
