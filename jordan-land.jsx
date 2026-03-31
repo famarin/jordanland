@@ -165,7 +165,7 @@ function AddPlotModal({open,onClose}){
     const dName=distOptions.find(o=>o.value===parseInt(f.dist))?.label||f.dist;
     const vName=villOptions.find(o=>o.value===parseInt(f.village))?.label||f.village;
     const bName=basinOptions.find(o=>o.value===parseInt(f.basin))?.label||f.basin;
-    const lines=["🏗️ *طلب إضافة قطعة أرض جديدة*","",`📍 المحافظة: ${gName}`,`📍 المديرية: ${dName}`,`📍 القرية: ${vName}`,`📍 الحوض: ${bName}`,`📍 الحي: ${f.hood||"—"}`,`📍 رقم القطعة: ${f.plot||"—"}`,`🔑 مفتاح القطعة: ${f.plotKey?String(f.plotKey).padStart(15,"0"):"—"}`,`💰 السعر الإداري: ${f.adminPrice||"—"}`,`📐 المساحة: ${f.area||"—"} م²`,`🏠 نوع العقار: ${f.propType||"—"}`,`👤 المالك: ${f.owner||"—"}`,`📊 الحصة: ${f.share||"—"}`,`🗺️ الموقع: ${f.mapUrl||"—"}`];
+    const lines=["🏗️ *طلب إضافة عقار جديد*","",`📍 المحافظة: ${gName}`,`📍 المديرية: ${dName}`,`📍 القرية: ${vName}`,`📍 الحوض: ${bName}`,`📍 الحي: ${f.hood||"—"}`,`📍 رقم القطعة: ${f.plot||"—"}`,`🔑 مفتاح القطعة: ${f.plotKey?String(f.plotKey).padStart(15,"0"):"—"}`,`💰 السعر الإداري: ${f.adminPrice||"—"}`,`📐 المساحة: ${f.area||"—"} م²`,`🏠 نوع العقار: ${f.propType||"—"}`,`👤 المالك: ${f.owner||"—"}`,`📊 الحصة: ${f.share||"—"}`,`🗺️ الموقع: ${f.mapUrl||"—"}`];
     window.open(`https://wa.me/962776615498?text=${encodeURIComponent(lines.join("\n"))}`,"_blank");
   };
   if(!open)return null;
@@ -175,7 +175,7 @@ function AddPlotModal({open,onClose}){
   return(
     <div style={{position:"fixed",inset:0,zIndex:1000,background:C.overlay,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}} onClick={onClose}>
       <div style={{background:C.card,borderRadius:"16px",border:`1px solid ${C.border}`,width:"100%",maxWidth:"600px",maxHeight:"90vh",overflow:"auto",padding:"24px"}} onClick={e=>e.stopPropagation()}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}><button onClick={onClose} style={{background:"none",border:"none",color:C.textDim,fontSize:"24px",cursor:"pointer"}}>✕</button><h2 style={{color:C.accent,fontSize:"20px",margin:0,fontWeight:700}}>إضافة أرض جديدة</h2></div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"20px"}}><button onClick={onClose} style={{background:"none",border:"none",color:C.textDim,fontSize:"24px",cursor:"pointer"}}>✕</button><h2 style={{color:C.accent,fontSize:"20px",margin:0,fontWeight:700}}>إضافة عقار جديد</h2></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",direction:"rtl"}}>
           <div><label style={labelStyle}>المحافظة *</label><select style={selectStyle} value={f.gov} onChange={e=>set("gov",e.target.value)}><option value="">اختر المحافظة</option>{govOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
           <div><label style={labelStyle}>المديرية *</label><select style={selectStyle} value={f.dist} onChange={e=>set("dist",e.target.value)} disabled={!f.gov}><option value="">اختر المديرية</option>{distOptions.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
@@ -307,7 +307,7 @@ export default function JordanLand(){
       <div style={{minHeight:"100vh",background:C.bg,fontFamily:"'Segoe UI',Tahoma,sans-serif",color:C.text,display:"flex",flexDirection:"column",alignItems:"center"}}>
         {/* Header */}
         <div style={{width:"100%",background:"linear-gradient(135deg,#0d1f3c 0%,#162a4a 50%,#0a1628 100%)",borderBottom:`1px solid ${C.border}`,padding:"32px 20px",textAlign:"center"}}>
-          <h1 style={{margin:0,fontSize:"32px",fontWeight:800,color:C.white}}><img src={JO_FLAG} alt="🇯🇴" style={{height:"1em",verticalAlign:"middle",marginLeft:"8px",borderRadius:"2px"}}/> عقار الأردن</h1>
+          <h1 style={{margin:0,fontSize:"32px",fontWeight:800,color:C.white}}><img src={JO_FLAG} alt="🇯🇴" style={{height:"1em",verticalAlign:"middle",marginLeft:"8px",borderRadius:"2px"}}/> عقارات الأردن</h1>
           <p style={{margin:"8px 0 0",color:C.textDim,fontSize:"16px"}}>منصة العقارات الأردنية</p>
         </div>
 
@@ -335,7 +335,7 @@ export default function JordanLand(){
         <div style={{maxWidth:"1800px",margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"10px"}}>
           <div style={{display:"flex",gap:"8px",alignItems:"center",flexWrap:"wrap"}}>
             <button onClick={goHome} style={{padding:"10px 20px",background:"linear-gradient(135deg,#3b82f6,#2563eb)",color:C.white,border:"none",borderRadius:"10px",cursor:"pointer",fontWeight:700,fontSize:"14px",boxShadow:"0 4px 15px rgba(59,130,246,0.3)"}}>🏠 الرئيسية</button>
-            <button onClick={()=>setShowAdd(true)} style={{padding:"10px 20px",background:`linear-gradient(135deg,${C.accent},${C.accentDark})`,color:C.white,border:"none",borderRadius:"10px",cursor:"pointer",fontWeight:700,fontSize:"14px",boxShadow:`0 4px 15px ${C.accent}30`}}>+ إضافة أرض</button>
+            <button onClick={()=>setShowAdd(true)} style={{padding:"10px 20px",background:`linear-gradient(135deg,${C.accent},${C.accentDark})`,color:C.white,border:"none",borderRadius:"10px",cursor:"pointer",fontWeight:700,fontSize:"14px",boxShadow:`0 4px 15px ${C.accent}30`}}>+ إضافة عقار</button>
             <a href="https://wa.link/e3hzg4" target="_blank" rel="noopener noreferrer" style={{padding:"10px 20px",background:"linear-gradient(135deg,#25d366,#128c7e)",color:C.white,border:"none",borderRadius:"10px",cursor:"pointer",fontWeight:700,fontSize:"14px",textDecoration:"none",boxShadow:"0 4px 15px rgba(37,211,102,0.3)"}}>💬 تواصل معنا</a>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
@@ -346,7 +346,7 @@ export default function JordanLand(){
               ))}
             </div>
             <div style={{textAlign:"right"}}>
-              <h1 style={{margin:0,fontSize:"22px",fontWeight:800,color:C.white}}><img src={JO_FLAG} alt="🇯🇴" style={{height:"1em",verticalAlign:"middle",marginLeft:"8px",borderRadius:"2px"}}/> عقار الأردن</h1>
+              <h1 style={{margin:0,fontSize:"22px",fontWeight:800,color:C.white}}><img src={JO_FLAG} alt="🇯🇴" style={{height:"1em",verticalAlign:"middle",marginLeft:"8px",borderRadius:"2px"}}/> عقارات الأردن</h1>
               <p style={{margin:"2px 0 0",color:C.textDim,fontSize:"12px"}}>{filtered.length} قطعة عقار</p>
             </div>
           </div>
@@ -376,13 +376,11 @@ export default function JordanLand(){
             {/* Filters */}
             <div style={{padding:"10px 12px",borderBottom:`1px solid ${C.border}`,flexShrink:0,overflowY:"auto",maxHeight:"200px"}}>
               <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 بحث بالاسم، المالك، رقم القطعة..." style={{width:"100%",padding:"10px 14px",background:C.inputBg,border:`1px solid ${C.border}`,borderRadius:"10px",color:C.text,fontSize:"14px",direction:"rtl",outline:"none"}}/>
                 <select style={selectStyle} value={govFilter} onChange={e=>{setGovFilter(e.target.value);setDistFilter("");setVillFilter("");setBasinFilter("");setHoodFilter("")}}><option value="">كل المحافظات</option>{HG.map(g=><option key={g[1]} value={`${g[0]} (${g[1]})`}>{g[0]} ({g[1]})</option>)}</select>
                 <select style={selectStyle} value={distFilter} onChange={e=>{setDistFilter(e.target.value);setVillFilter("");setBasinFilter("");setHoodFilter("")}} disabled={!govFilter}><option value="">كل المديريات</option>{filteredDists.map(d=><option key={d[1]} value={d[1]}>{d[0]} ({d[1]})</option>)}</select>
                 <select style={selectStyle} value={villFilter} onChange={e=>{setVillFilter(e.target.value);setBasinFilter("");setHoodFilter("")}} disabled={!distFilter}><option value="">كل القرى</option>{filteredVills.map(v=><option key={v[1]} value={v[1]}>{v[0]} ({v[1]})</option>)}</select>
                 <select style={selectStyle} value={basinFilter} onChange={e=>{setBasinFilter(e.target.value);setHoodFilter("")}} disabled={!villFilter}><option value="">كل الأحواض</option>{filteredBasins.map((b,i)=><option key={i} value={b[1]}>{b[0]} ({b[1]})</option>)}</select>
                 <select style={selectStyle} value={hoodFilter} onChange={e=>setHoodFilter(e.target.value)} disabled={!basinFilter}><option value="">كل الأحياء</option>{filteredHoods.map((h,i)=><option key={i} value={h[0]}>{h[0]}</option>)}</select>
-                <select style={{...selectStyle,borderColor:propTypeFilter?C.blue:C.border}} value={propTypeFilter} onChange={e=>setPropTypeFilter(e.target.value)}><option value="">🔄 عرض الكل</option><option value="سكني">🏡 سكني</option><option value="تجاري">🏬 تجاري</option><option value="صناعي">🏭 صناعي</option><option value="زراعي">🌾 زراعي</option><option value="فيلا / شقة">🏠 فيلا / شقة</option></select>
                 {(govFilter||distFilter||villFilter||basinFilter||hoodFilter||propTypeFilter||search)&&<button onClick={resetFilters} style={{padding:"8px 14px",background:C.red+"20",color:C.red,border:`1px solid ${C.red}40`,borderRadius:"10px",cursor:"pointer",fontWeight:600,fontSize:"13px",alignSelf:"flex-end"}}>✕ مسح الفلاتر</button>}
               </div>
             </div>
