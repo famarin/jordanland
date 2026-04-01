@@ -19,7 +19,7 @@ const JO_FLAG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAVCAYAAAAnzez
 const C={bg:"#0a1628",card:"#111d33",cardHover:"#162240",border:"#1e3050",accent:"#22c55e",accentDark:"#16a34a",text:"#e2e8f0",textDim:"#94a3b8",textMuted:"#64748b",gold:"#f59e0b",red:"#ef4444",blue:"#3b82f6",white:"#ffffff",inputBg:"#0d1b30",overlay:"rgba(0,0,0,0.7)"};
 
 // ═══ FIREBASE STORAGE IMAGE URL ═══
-const PLOT_IMG=(ref)=>`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}.jpg?alt=media`;
+const PLOT_IMG=(ref)=>`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}.png?alt=media`;
 
 
 // ═══ LOAD LEAFLET CSS & JS DYNAMICALLY ═══
@@ -205,12 +205,9 @@ function AddPlotModal({open,onClose}){
 
 // ═══ PLOT CARD ═══
 function PlotCard({lot,isSelected,onSelect}){
-  const [imgSrc,setImgSrc]=useState(null);
   const [fbImgOk,setFbImgOk]=useState(true);
-  const fileRef=useRef(null);
   const cardRef=useRef(null);
-  const handleImg=(e)=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setImgSrc(ev.target.result);r.readAsDataURL(f);};
-  const plotImg=imgSrc||lot.pic||(fbImgOk?PLOT_IMG(lot.ref):null);
+  const plotImg=fbImgOk?PLOT_IMG(lot.ref):null;
 
   useEffect(()=>{if(isSelected&&cardRef.current)cardRef.current.scrollIntoView({behavior:"smooth",block:"center"});},[isSelected]);
 
@@ -241,8 +238,6 @@ function PlotCard({lot,isSelected,onSelect}){
         <div style={{marginTop:"10px",display:"flex",gap:"6px",flexWrap:"wrap",direction:"rtl"}}>
           {lot.mapUrl&&<a href={lot.mapUrl} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{padding:"6px 14px",background:C.accent,color:C.bg,borderRadius:"8px",textDecoration:"none",fontWeight:600,fontSize:"12px"}}>🗺️ فتح الموقع</a>}
           <a href="https://wa.link/e3hzg4" target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{padding:"6px 14px",background:"#25d366",color:C.white,borderRadius:"8px",textDecoration:"none",fontWeight:600,fontSize:"12px"}}>💬 واتساب</a>
-          <button onClick={e=>{e.stopPropagation();fileRef.current?.click()}} style={{padding:"6px 14px",background:C.inputBg,color:C.textDim,border:`1px solid ${C.border}`,borderRadius:"8px",cursor:"pointer",fontSize:"12px"}}>📷 رفع صورة</button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleImg} style={{display:"none"}}/>
         </div>
       </div>
     </div>
