@@ -18,6 +18,9 @@ const JO_FLAG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAVCAYAAAAnzez
 // ═══ COLORS ═══
 const C={bg:"#0a1628",card:"#111d33",cardHover:"#162240",border:"#1e3050",accent:"#22c55e",accentDark:"#16a34a",text:"#e2e8f0",textDim:"#94a3b8",textMuted:"#64748b",gold:"#f59e0b",red:"#ef4444",blue:"#3b82f6",white:"#ffffff",inputBg:"#0d1b30",overlay:"rgba(0,0,0,0.7)"};
 
+// ═══ FIREBASE STORAGE IMAGE URL ═══
+const PLOT_IMG=(ref)=>`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}.jpg?alt=media`;
+
 
 // ═══ LOAD LEAFLET CSS & JS DYNAMICALLY ═══
 function useLeaflet(){
@@ -39,7 +42,9 @@ function useLeaflet(){
 // ═══ BUILD POPUP HTML ═══
 function buildPopupHTML(lot){
   const pk=lot.plotKey!=null?String(lot.plotKey).padStart(15,"0"):"—";
+  const imgUrl=PLOT_IMG(lot.ref);
   return `<div style="direction:rtl;text-align:right;font-family:'Segoe UI',Tahoma,sans-serif;min-width:240px;max-width:300px;padding:2px">
+    <img src="${imgUrl}" alt="" onerror="this.style.display='none'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
       <span style="font-weight:800;color:#16a34a;font-size:18px">#${lot.ref}</span>
       <span style="font-size:11px;color:#475569;background:#f1f5f9;padding:2px 8px;border-radius:6px">${lot.area?.toLocaleString()||"—"} م²</span>
@@ -201,15 +206,17 @@ function AddPlotModal({open,onClose}){
 // ═══ PLOT CARD ═══
 function PlotCard({lot,isSelected,onSelect}){
   const [imgSrc,setImgSrc]=useState(null);
+  const [fbImgOk,setFbImgOk]=useState(true);
   const fileRef=useRef(null);
   const cardRef=useRef(null);
   const handleImg=(e)=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setImgSrc(ev.target.result);r.readAsDataURL(f);};
+  const plotImg=imgSrc||lot.pic||(fbImgOk?PLOT_IMG(lot.ref):null);
 
   useEffect(()=>{if(isSelected&&cardRef.current)cardRef.current.scrollIntoView({behavior:"smooth",block:"center"});},[isSelected]);
 
   return(
     <div ref={cardRef} style={{background:isSelected?C.cardHover:C.card,borderRadius:"14px",border:`1px solid ${isSelected?C.accent+"80":C.border}`,transition:"all 0.2s",cursor:"pointer",flexShrink:0}} onClick={()=>{if(onSelect)onSelect(lot.ref);}} onMouseEnter={e=>{e.currentTarget.style.background=C.cardHover;e.currentTarget.style.borderColor=C.accent+"40"}} onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background=C.card;e.currentTarget.style.borderColor=C.border}}}>
-      {(imgSrc||lot.pic)&&<div style={{height:"140px",overflow:"hidden",borderRadius:"14px 14px 0 0"}}><img src={imgSrc||lot.pic} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>}
+      {plotImg&&<div style={{height:"160px",overflow:"hidden",borderRadius:"14px 14px 0 0"}}><img src={plotImg} alt="" onError={()=>setFbImgOk(false)} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>}
       <div style={{padding:"14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px",direction:"rtl"}}>
           <span style={{color:C.accent,fontWeight:800,fontSize:"18px"}}>#{lot.ref}</span>
