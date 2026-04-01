@@ -19,7 +19,89 @@ const JO_FLAG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAVCAYAAAAnzez
 const C={bg:"#0a1628",card:"#111d33",cardHover:"#162240",border:"#1e3050",accent:"#22c55e",accentDark:"#16a34a",text:"#e2e8f0",textDim:"#94a3b8",textMuted:"#64748b",gold:"#f59e0b",red:"#ef4444",blue:"#3b82f6",white:"#ffffff",inputBg:"#0d1b30",overlay:"rgba(0,0,0,0.7)"};
 
 // ═══ FIREBASE STORAGE IMAGE URL ═══
-const PLOT_IMG=(ref)=>`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}.png?alt=media`;
+const PLOT_IMG=(ref,idx)=>idx===0
+  ?`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}.png?alt=media`
+  :`https://firebasestorage.googleapis.com/v0/b/jordan-land.firebasestorage.app/o/plots%2F${ref}_${idx+1}.png?alt=media`;
+
+// ═══ PHOTO GALLERY LIGHTBOX ═══
+function PhotoGallery({plotRef,onClose}){
+  const [images,setImages]=useState([]);
+  const [current,setCurrent]=useState(0);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    if(!plotRef)return;
+    let cancelled=false;
+    const found=[];
+    const tryLoad=(idx)=>{
+      const img=new Image();
+      img.onload=()=>{
+        if(cancelled)return;
+        found.push(PLOT_IMG(plotRef,idx));
+        setImages([...found]);
+        setLoading(false);
+        tryLoad(idx+1);
+      };
+      img.onerror=()=>{
+        if(cancelled)return;
+        setLoading(false);
+      };
+      img.src=PLOT_IMG(plotRef,idx);
+    };
+    tryLoad(0);
+    return()=>{cancelled=true;};
+  },[plotRef]);
+
+  if(!plotRef)return null;
+  const prev=()=>setCurrent(c=>(c-1+images.length)%images.length);
+  const next=()=>setCurrent(c=>(c+1)%images.length);
+
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:2000,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"relative",maxWidth:"90vw",maxHeight:"85vh",display:"flex",flexDirection:"column",alignItems:"center",gap:"12px"}}>
+        {/* Close button */}
+        <button onClick={onClose} style={{position:"absolute",top:"-40px",right:"0",background:"none",border:"none",color:"#fff",fontSize:"32px",cursor:"pointer",zIndex:10}}>✕</button>
+
+        {loading&&images.length===0&&(
+          <div style={{color:"#fff",fontSize:"18px",padding:"40px"}}>جاري تحميل الصور...</div>
+        )}
+
+        {!loading&&images.length===0&&(
+          <div style={{color:"#94a3b8",fontSize:"18px",padding:"40px",textAlign:"center"}}>
+            <div style={{fontSize:"48px",marginBottom:"12px"}}>📷</div>
+            <div>لا توجد صور لهذا العقار</div>
+          </div>
+        )}
+
+        {images.length>0&&(
+          <>
+            {/* Image */}
+            <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {images.length>1&&(
+                <button onClick={prev} style={{position:"absolute",left:"-50px",background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",fontSize:"28px",width:"44px",height:"44px",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}}>‹</button>
+              )}
+              <img src={images[current]} alt={`صورة ${current+1}`} style={{maxWidth:"85vw",maxHeight:"75vh",objectFit:"contain",borderRadius:"12px",boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}/>
+              {images.length>1&&(
+                <button onClick={next} style={{position:"absolute",right:"-50px",background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",fontSize:"28px",width:"44px",height:"44px",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}}>›</button>
+              )}
+            </div>
+            {/* Counter + dots */}
+            <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+              <span style={{color:"#94a3b8",fontSize:"14px"}}>#{plotRef} — صورة {current+1} من {images.length}</span>
+            </div>
+            {images.length>1&&(
+              <div style={{display:"flex",gap:"6px"}}>
+                {images.map((_,i)=>(
+                  <button key={i} onClick={()=>setCurrent(i)} style={{width:"10px",height:"10px",borderRadius:"50%",border:"none",background:i===current?"#22c55e":"rgba(255,255,255,0.3)",cursor:"pointer",transition:"all 0.2s"}}/>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 
 // ═══ LOAD LEAFLET CSS & JS DYNAMICALLY ═══
@@ -42,9 +124,7 @@ function useLeaflet(){
 // ═══ BUILD POPUP HTML ═══
 function buildPopupHTML(lot){
   const pk=lot.plotKey!=null?String(lot.plotKey).padStart(15,"0"):"—";
-  const imgUrl=PLOT_IMG(lot.ref);
   return `<div style="direction:rtl;text-align:right;font-family:'Segoe UI',Tahoma,sans-serif;min-width:240px;max-width:300px;padding:2px">
-    <img src="${imgUrl}" alt="" onerror="this.style.display='none'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
       <span style="font-weight:800;color:#16a34a;font-size:18px">#${lot.ref}</span>
       <span style="font-size:11px;color:#475569;background:#f1f5f9;padding:2px 8px;border-radius:6px">${lot.area?.toLocaleString()||"—"} م²</span>
@@ -65,6 +145,7 @@ function buildPopupHTML(lot){
       ${lot.share?`<div><span style="color:#d97706;font-weight:600">الحصة:</span> ${lot.share}</div>`:""}
     </div>
     <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;direction:rtl;justify-content:flex-start">
+      <a href="#" onclick="event.preventDefault();window.__openGallery&&window.__openGallery(${lot.ref})" style="display:inline-block;padding:6px 12px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:11px;cursor:pointer">📷 عرض الصور</a>
       ${lot.mapUrl?`<a href="${lot.mapUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:6px 12px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:11px">🗺️ فتح الموقع</a>`:""}
       <a href="https://wa.link/e3hzg4" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:6px 12px;background:#25d366;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:11px">💬 واتساب</a>
     </div>
@@ -204,16 +285,13 @@ function AddPlotModal({open,onClose}){
 }
 
 // ═══ PLOT CARD ═══
-function PlotCard({lot,isSelected,onSelect}){
-  const [fbImgOk,setFbImgOk]=useState(true);
+function PlotCard({lot,isSelected,onSelect,onViewPhotos}){
   const cardRef=useRef(null);
-  const plotImg=fbImgOk?PLOT_IMG(lot.ref):null;
 
   useEffect(()=>{if(isSelected&&cardRef.current)cardRef.current.scrollIntoView({behavior:"smooth",block:"center"});},[isSelected]);
 
   return(
     <div ref={cardRef} style={{background:isSelected?C.cardHover:C.card,borderRadius:"14px",border:`1px solid ${isSelected?C.accent+"80":C.border}`,transition:"all 0.2s",cursor:"pointer",flexShrink:0}} onClick={()=>{if(onSelect)onSelect(lot.ref);}} onMouseEnter={e=>{e.currentTarget.style.background=C.cardHover;e.currentTarget.style.borderColor=C.accent+"40"}} onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background=C.card;e.currentTarget.style.borderColor=C.border}}}>
-      {plotImg&&<div style={{height:"160px",overflow:"hidden",borderRadius:"14px 14px 0 0"}}><img src={plotImg} alt="" onError={()=>setFbImgOk(false)} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>}
       <div style={{padding:"14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px",direction:"rtl"}}>
           <span style={{color:C.accent,fontWeight:800,fontSize:"18px"}}>#{lot.ref}</span>
@@ -236,6 +314,7 @@ function PlotCard({lot,isSelected,onSelect}){
           {lot.share&&<div><span style={{color:C.gold,fontWeight:600}}>الحصة:</span> {lot.share}</div>}
         </div>
         <div style={{marginTop:"10px",display:"flex",gap:"6px",flexWrap:"wrap",direction:"rtl"}}>
+          <button onClick={e=>{e.stopPropagation();if(onViewPhotos)onViewPhotos(lot.ref)}} style={{padding:"6px 14px",background:"#6366f1",color:C.white,border:"none",borderRadius:"8px",cursor:"pointer",fontWeight:600,fontSize:"12px"}}>📷 عرض الصور</button>
           {lot.mapUrl&&<a href={lot.mapUrl} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{padding:"6px 14px",background:C.accent,color:C.bg,borderRadius:"8px",textDecoration:"none",fontWeight:600,fontSize:"12px"}}>🗺️ فتح الموقع</a>}
           <a href="https://wa.link/e3hzg4" target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{padding:"6px 14px",background:"#25d366",color:C.white,borderRadius:"8px",textDecoration:"none",fontWeight:600,fontSize:"12px"}}>💬 واتساب</a>
         </div>
@@ -255,11 +334,13 @@ export default function JordanLand(){
   const [hoodFilter,setHoodFilter]=useState("");
   const [propTypeFilter,setPropTypeFilter]=useState("");
   const [showAdd,setShowAdd]=useState(false);
+  const [galleryRef,setGalleryRef]=useState(null);
   const [mobileView,setMobileView]=useState("map"); // "map" | "list"
   const [mapBounds,setMapBounds]=useState(null);
   const [selectedRef,setSelectedRef]=useState(null);
   const [isMobile,setIsMobile]=useState(window.innerWidth<768);
 
+  useEffect(()=>{window.__openGallery=(ref)=>setGalleryRef(ref);return()=>{delete window.__openGallery;};},[]);
   useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
   // Cascading filter data
@@ -283,10 +364,7 @@ export default function JordanLand(){
 
   // Further filter by map bounds for the list
   const coordMap=useMemo(()=>{const m={};COORDS.forEach(c=>{m[c[0]]={lat:c[1],lng:c[2]};});return m;},[]);
-  const visibleInMap=useMemo(()=>{
-    if(!mapBounds)return filtered;
-    return filtered.filter(l=>{const co=coordMap[l.ref];if(!co)return false;return co.lat>=mapBounds.south&&co.lat<=mapBounds.north&&co.lng>=mapBounds.west&&co.lng<=mapBounds.east;});
-  },[filtered,mapBounds,coordMap]);
+  const visibleInMap=filtered;
 
   const resetFilters=()=>{setGovFilter("");setDistFilter("");setVillFilter("");setBasinFilter("");setHoodFilter("");setPropTypeFilter("");setSearch("")};
   const goHome=()=>{setPage("landing");resetFilters();setPropTypeFilter("")};
@@ -389,12 +467,12 @@ export default function JordanLand(){
 
             {/* Results count */}
             <div style={{padding:"8px 12px",textAlign:"right",fontSize:"13px",color:C.textDim,flexShrink:0,borderBottom:`1px solid ${C.border}`}}>
-              عرض <span style={{color:C.accent,fontWeight:700}}>{visibleInMap.length}</span> قطعة {mapBounds?"في نطاق الخريطة":""}
+              عرض <span style={{color:C.accent,fontWeight:700}}>{visibleInMap.length}</span> قطعة عقار
             </div>
 
             {/* Scrollable list */}
             <div style={{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:"12px"}}>
-              {visibleInMap.map(lot=><PlotCard key={lot.id} lot={lot} isSelected={lot.ref===selectedRef} onSelect={setSelectedRef}/>)}
+              {visibleInMap.map(lot=><PlotCard key={lot.id} lot={lot} isSelected={lot.ref===selectedRef} onSelect={setSelectedRef} onViewPhotos={setGalleryRef}/>)}
               {visibleInMap.length===0&&(
                 <div style={{textAlign:"center",padding:"40px 20px",color:C.textMuted}}>
                   <div style={{fontSize:"40px",marginBottom:"12px"}}>🔍</div>
@@ -408,6 +486,7 @@ export default function JordanLand(){
       </div>
 
       <AddPlotModal open={showAdd} onClose={()=>setShowAdd(false)}/>
+      {galleryRef&&<PhotoGallery plotRef={galleryRef} onClose={()=>setGalleryRef(null)}/>}
     </div>
   );
 }
